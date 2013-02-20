@@ -17,6 +17,8 @@
 @property (nonatomic, strong) NSMutableArray *rows;
 @property (nonatomic, strong) JTTableViewGestureRecognizer *tableViewRecognizer;
 @property (nonatomic, strong) id grabbedObject;
+@property int selectedRow;
+
 
 - (void)moveRowToBottomForIndexPath:(NSIndexPath *)indexPath;
 
@@ -26,6 +28,7 @@
 @synthesize rows;
 @synthesize tableViewRecognizer;
 @synthesize grabbedObject;
+@synthesize selectedRow;
 
 #define ADDING_CELL @"Continue..."
 #define DONE_CELL @"Done"
@@ -38,6 +41,7 @@
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     if (self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil]) {
     }
+    
     return self;
 }
 
@@ -61,7 +65,15 @@
     self.tableView.backgroundColor = [UIColor blackColor];
     self.tableView.separatorStyle  = UITableViewCellSeparatorStyleNone;
     self.tableView.rowHeight       = NORMAL_CELL_FINISHING_HEIGHT;
+    
+    self.selectedRow = 0;
+
+  
+    
 }
+
+
+
 
 #pragma mark Private Method
 
@@ -94,6 +106,7 @@
 
     NSObject *object = [self.rows objectAtIndex:indexPath.row];
     UIColor *backgroundColor = [[UIColor redColor] colorWithHueOffset:0.12 * indexPath.row / [self tableView:tableView numberOfRowsInSection:indexPath.section]];
+    
     if ([object isEqual:ADDING_CELL]) {
         NSString *cellIdentifier = nil;
         JTTransformableTableViewCell *cell = nil;
@@ -132,7 +145,8 @@
             cell.textLabel.shadowColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.6];
             return cell;
 
-        } else {
+        }
+        else {
             // Otherwise is the case we wanted to pick the pullDown style
             cellIdentifier = @"UnfoldingTableViewCell";
             cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
@@ -143,23 +157,18 @@
                 cell.textLabel.adjustsFontSizeToFitWidth = YES;
                 cell.textLabel.textColor = [UIColor whiteColor];
             }
-            
+            cell.textLabel.text = @"SCROTUM KEBAB";
             // Setup tint color
             cell.tintColor = backgroundColor;
             
             cell.finishedHeight = COMMITING_CREATE_CELL_HEIGHT;
-            if (cell.frame.size.height > COMMITING_CREATE_CELL_HEIGHT) {
-                cell.textLabel.text = @"Release to create cell...";
-            } else {
-                cell.textLabel.text = @"Continue Pinching...";
-            }
             cell.contentView.backgroundColor = [UIColor clearColor];
             cell.textLabel.shadowOffset = CGSizeMake(0, 1);
             cell.textLabel.shadowColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.6];
             return cell;
         }
     
-    } else {
+    } else { // Pre existing cell
 
         static NSString *cellIdentifier = @"MyCell";
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
@@ -171,7 +180,7 @@
         }
 
         cell.textLabel.text = [NSString stringWithFormat:@"%@", (NSString *)object];
-        if ([object isEqual:DONE_CELL]) {
+               if ([object isEqual:DONE_CELL]) {
             cell.textLabel.textColor = [UIColor grayColor];
             cell.contentView.backgroundColor = [UIColor darkGrayColor];
         } else if ([object isEqual:DUMMY_CELL]) {
@@ -195,7 +204,8 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSLog(@"tableView:didSelectRowAtIndexPath: %@", indexPath);
+    
+    [self requestRowTitleforRow: [indexPath indexAtPosition:1] ];
 }
 
 #pragma mark -
@@ -206,9 +216,11 @@
 }
 
 - (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsCommitRowAtIndexPath:(NSIndexPath *)indexPath {
-    [self.rows replaceObjectAtIndex:indexPath.row withObject:@"Added!"];
+    [self.rows replaceObjectAtIndex:indexPath.row withObject:@"Added"];
     JTTransformableTableViewCell *cell = (id)[gestureRecognizer.tableView cellForRowAtIndexPath:indexPath];
 
+
+    
     BOOL isFirstCell = indexPath.section == 0 && indexPath.row == 0;
     if (isFirstCell && cell.frame.size.height > COMMITING_CREATE_CELL_HEIGHT * 2) {
         [self.rows removeObjectAtIndex:indexPath.row];
@@ -218,21 +230,53 @@
     else {
         cell.finishedHeight = NORMAL_CELL_FINISHING_HEIGHT;
         cell.imageView.image = nil;
-        cell.textLabel.text = @"Just Added!";
+        cell.textLabel.text = @"";
+        
+        [self requestRowTitleforRow:0];
+        
+        
+    }
+    
+    
+}
+
+- (void)requestRowTitleforRow:(int)rowNum{
+    NSLog(@"requesting title for: %d", rowNum);
+    
+    self.selectedRow = rowNum;
+    
+    UIAlertView *myAlertView = [[UIAlertView alloc] initWithTitle:@"Item name" message:@"" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Save", nil];
+    
+    [myAlertView setAlertViewStyle: UIAlertViewStylePlainTextInput];
+    [myAlertView show];
+}
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    NSString *title = [alertView buttonTitleAtIndex:buttonIndex];
+    if([title isEqualToString:@"Save"])
+    {
+        UITextField *input = [alertView textFieldAtIndex:0];
+        NSLog(@"User entered : %@", input.text);
+        [self.rows setObject:input.text atIndexedSubscript:self.selectedRow];
+        [self.tableView reloadData];
     }
 }
+
+
+
 
 - (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsDiscardRowAtIndexPath:(NSIndexPath *)indexPath {
     [self.rows removeObjectAtIndex:indexPath.row];
 }
 
 // Uncomment to following code to disable pinch in to create cell gesture
-//- (NSIndexPath *)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer willCreateCellAtIndexPath:(NSIndexPath *)indexPath {
-//    if (indexPath.section == 0 && indexPath.row == 0) {
-//        return indexPath;
-//    }
-//    return nil;
-//}
+- (NSIndexPath *)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer willCreateCellAtIndexPath:(NSIndexPath *)indexPath {
+    if (indexPath.section == 0 && indexPath.row == 0) {
+        return indexPath;
+    }
+    return nil;
+}
 
 #pragma mark JTTableViewGestureEditingRowDelegate
 
