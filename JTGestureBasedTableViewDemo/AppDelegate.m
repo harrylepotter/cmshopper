@@ -7,7 +7,7 @@
 //
 
 #import "AppDelegate.h"
-
+#import "ShopAPIController.h"
 #import "ViewController.h"
 
 @implementation AppDelegate
@@ -19,11 +19,19 @@
 {
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     // Override point for customization after application launch.
+    
+    // Setup database using Magical Records
+    [MagicalRecord setupCoreDataStackWithAutoMigratingSqliteStoreNamed:@"ShoppingList"];
 
     // Will auto load the corresponding viewController.xib
     self.viewController = [[ViewController alloc] initWithNibName:nil bundle:nil];
 
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackOpaque];
+    
+    // Testing
+    [[ShopAPIController sharedInstance] addItemByName:@"TestName" andCategory:@"TestCategory"];
+    
+    
 
     self.window.rootViewController = self.viewController;
     [self.window makeKeyAndVisible];
@@ -67,6 +75,7 @@
      Save data if appropriate.
      See also applicationDidEnterBackground:.
      */
+    [MagicalRecord cleanUp];
 }
 
 @end
