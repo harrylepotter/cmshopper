@@ -216,6 +216,7 @@
                 cell.textLabel.adjustsFontSizeToFitWidth = YES;
                 cell.textLabel.textColor = [UIColor whiteColor];
             }
+
             cell.textLabel.text = @"...";
             // Setup tint color
             cell.tintColor = backgroundColor;
@@ -398,11 +399,11 @@
 
 
     // Row color needs update after datasource changes, reload it.
-    [tableView performSelector:@selector(reloadVisibleRowsExceptIndexPath:) withObject:indexPath afterDelay:JTTableViewRowAnimationDuration];
-
-    if (rowToBeMovedToBottom) {
-        [self performSelector:@selector(moveRowToBottomForIndexPath:) withObject:rowToBeMovedToBottom afterDelay:JTTableViewRowAnimationDuration * 2];
-    }
+//    [tableView performSelector:@selector(reloadVisibleRowsExceptIndexPath:) withObject:indexPath afterDelay:JTTableViewRowAnimationDuration];
+//
+//    if (rowToBeMovedToBottom) {
+//        [self performSelector:@selector(moveRowToBottomForIndexPath:) withObject:rowToBeMovedToBottom afterDelay:JTTableViewRowAnimationDuration * 2];
+//    }
 }
 
 #pragma mark - JTTableViewGestureMoveRowDelegate
