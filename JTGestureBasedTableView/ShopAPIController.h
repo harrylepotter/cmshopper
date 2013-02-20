@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 #define API_TOKEN @"918ee4e316fbeef735526e56645f6129"
-#define SERVER_URL @"http://server.com"
+#define SERVER_URL @"http://cmshopper.herokuapp.com"
 
 typedef enum ShopAPIControllerRequestType {
     ShopAPIControllerRequestTypeUnknown = 0,

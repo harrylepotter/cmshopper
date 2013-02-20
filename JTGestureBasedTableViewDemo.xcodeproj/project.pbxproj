@@ -22,7 +22,7 @@
 		1AA68A7514FA4765009145F3 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 52D6218F14DF7F1E00400117 /* ViewController.m */; };
 		4711F4A516D4E05E00663193 /* ShoppingList.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 4711F4A316D4E05E00663193 /* ShoppingList.xcdatamodeld */; };
 		4711F4A716D4E0ED00663193 /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4711F4A616D4E0ED00663193 /* CoreData.framework */; };
-		4711F4AD16D4E32800663193 /* MOListItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 4711F4AC16D4E32800663193 /* MOListItem.m */; };
+		4711F4C916D50A9F00663193 /* MOListItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 4711F4C816D50A9F00663193 /* MOListItem.m */; };
 		47C4FDC016D4E0030073C353 /* MagicalImportFunctions.m in Sources */ = {isa = PBXBuildFile; fileRef = 47C4FD8816D4E0030073C353 /* MagicalImportFunctions.m */; };
 		47C4FDC116D4E0030073C353 /* NSAttributeDescription+MagicalDataImport.m in Sources */ = {isa = PBXBuildFile; fileRef = 47C4FD8A16D4E0030073C353 /* NSAttributeDescription+MagicalDataImport.m */; };
 		47C4FDC216D4E0030073C353 /* NSEntityDescription+MagicalDataImport.m in Sources */ = {isa = PBXBuildFile; fileRef = 47C4FD8C16D4E0030073C353 /* NSEntityDescription+MagicalDataImport.m */; };
@@ -96,8 +96,8 @@
 		1AA68A6614FA443D009145F3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/MainStoryboard_iPad.storyboard; sourceTree = "<group>"; };
 		4711F4A416D4E05E00663193 /* ShoppingList.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = ShoppingList.xcdatamodel; sourceTree = "<group>"; };
 		4711F4A616D4E0ED00663193 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
-		4711F4AB16D4E32800663193 /* MOListItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MOListItem.h; sourceTree = "<group>"; };
-		4711F4AC16D4E32800663193 /* MOListItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MOListItem.m; sourceTree = "<group>"; };
+		4711F4C716D50A9F00663193 /* MOListItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MOListItem.h; sourceTree = "<group>"; };
+		4711F4C816D50A9F00663193 /* MOListItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MOListItem.m; sourceTree = "<group>"; };
 		47C4FD8716D4E0030073C353 /* MagicalImportFunctions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MagicalImportFunctions.h; sourceTree = "<group>"; };
 		47C4FD8816D4E0030073C353 /* MagicalImportFunctions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MagicalImportFunctions.m; sourceTree = "<group>"; };
 		47C4FD8916D4E0030073C353 /* NSAttributeDescription+MagicalDataImport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSAttributeDescription+MagicalDataImport.h"; sourceTree = "<group>"; };
@@ -358,8 +358,8 @@
 				52B4AC6414EB47AC006574B9 /* UIColor+JTGestureBasedTableViewHelper.m */,
 				4AF35D1316D48FC600EFADC4 /* ShopAPIController.h */,
 				4AF35D1416D48FC600EFADC4 /* ShopAPIController.m */,
-				4711F4AB16D4E32800663193 /* MOListItem.h */,
-				4711F4AC16D4E32800663193 /* MOListItem.m */,
+				4711F4C716D50A9F00663193 /* MOListItem.h */,
+				4711F4C816D50A9F00663193 /* MOListItem.m */,
 			);
 			path = JTGestureBasedTableView;
 			sourceTree = "<group>";
@@ -642,7 +642,7 @@
 				47C4FDD816D4E0030073C353 /* MagicalRecord+ShorthandSupport.m in Sources */,
 				47C4FDD916D4E0030073C353 /* MagicalRecord.m in Sources */,
 				4711F4A516D4E05E00663193 /* ShoppingList.xcdatamodeld in Sources */,
-				4711F4AD16D4E32800663193 /* MOListItem.m in Sources */,
+				4711F4C916D50A9F00663193 /* MOListItem.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

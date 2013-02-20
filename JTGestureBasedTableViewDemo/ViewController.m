@@ -36,27 +36,72 @@
 #define COMMITING_CREATE_CELL_HEIGHT 60
 #define NORMAL_CELL_FINISHING_HEIGHT 60
 
+
+
+- (void)exampleCalls
+{
+    // To get a list of all items
+//    NSArray *allItems = [MOListItem MR_findAllSortedBy:@"name" ascending:YES];
+//    
+//    for(int i=0; i < [allItems count]; i++){
+//        MOListItem *item = [allItems objectAtIndex:i];
+//        NSLog(@"item: %@", [item name]);
+//    }
+    
+    
+//    // Create New
+   // [[ShopAPIController sharedInstance] addItemByName:@"TestName" andCategory:@"TestCategory"];
+   
+//    
+//    // Delete existing
+ //   [[ShopAPIController sharedInstance] deleteItemWithID:@208];
+//    
+    // Get all items (refresh)
+    [[ShopAPIController sharedInstance] getAllItems];
+    
+//    // Update Item
+//    [[ShopAPIController sharedInstance] updateItemWithID:@123 toName:@"NewName" andCategory:@"NewCategory"];
+}
+
+
+
+
+
 #pragma mark - View lifecycle
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
     if (self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil]) {
     }
     
     return self;
 }
 
+- (void)dealloc
+{
+    [self viewDidUnload];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    // In this example, we setup self.rows as datasource
-    self.rows = [NSMutableArray arrayWithObjects:
-                 @"Swipe to the right to complete",
-                 @"Swipe to left to delete",
-                 @"Drag down to create a new cell",
-                 @"Pinch two rows apart to create cell",
-                 @"Long hold to start reorder cell",
-                 nil];
-
+    
+    // TODO: REMOVE
+    [self exampleCalls];
+    
+    [[ShopAPIController sharedInstance] addDelegate:self];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleDataModelChange:)
+                                                 name:NSManagedObjectContextObjectsDidChangeNotification
+                                               object:[NSManagedObjectContext MR_contextForCurrentThread]];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(didSave:)
+                                                 name:NSManagedObjectContextDidSaveNotification
+                                               object:[NSManagedObjectContext MR_contextForCurrentThread]];
+    
+    
 
     // Setup your tableView.delegate and tableView.datasource,
     // then enable gesture recognition in one line.
@@ -66,10 +111,19 @@
     self.tableView.separatorStyle  = UITableViewCellSeparatorStyleNone;
     self.tableView.rowHeight       = NORMAL_CELL_FINISHING_HEIGHT;
     
+    self.rows = [NSMutableArray arrayWithArray:[MOListItem MR_findAll]];
     self.selectedRow = 0;
 
   
     
+}
+
+- (void)viewDidUnload
+{
+    [super viewDidUnload];
+    
+    [[ShopAPIController sharedInstance] removeDelegate:self];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 
@@ -77,7 +131,8 @@
 
 #pragma mark Private Method
 
-- (void)moveRowToBottomForIndexPath:(NSIndexPath *)indexPath {
+- (void)moveRowToBottomForIndexPath:(NSIndexPath *)indexPath
+{
     [self.tableView beginUpdates];
     
     id object = [self.rows objectAtIndex:indexPath.row];
@@ -94,17 +149,22 @@
 
 #pragma mark UITableViewDatasource
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+  
     return [self.rows count];
 }
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
     return 1;
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-
-    NSObject *object = [self.rows objectAtIndex:indexPath.row];
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  
+   
+    MOListItem *object = [self.rows objectAtIndex:indexPath.row];
     UIColor *backgroundColor = [[UIColor redColor] colorWithHueOffset:0.12 * indexPath.row / [self tableView:tableView numberOfRowsInSection:indexPath.section]];
     
     if ([object isEqual:ADDING_CELL]) {
@@ -122,7 +182,6 @@
                 cell.textLabel.adjustsFontSizeToFitWidth = YES;
                 cell.textLabel.textColor = [UIColor whiteColor];
             }
-            
             
             cell.finishedHeight = COMMITING_CREATE_CELL_HEIGHT;
             if (cell.frame.size.height > COMMITING_CREATE_CELL_HEIGHT * 2) {
@@ -157,7 +216,7 @@
                 cell.textLabel.adjustsFontSizeToFitWidth = YES;
                 cell.textLabel.textColor = [UIColor whiteColor];
             }
-            cell.textLabel.text = @"SCROTUM KEBAB";
+            cell.textLabel.text = @"...";
             // Setup tint color
             cell.tintColor = backgroundColor;
             
@@ -168,7 +227,8 @@
             return cell;
         }
     
-    } else { // Pre existing cell
+    }
+    else { // Pre existing cell
 
         static NSString *cellIdentifier = @"MyCell";
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
@@ -179,17 +239,9 @@
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
         }
 
-        cell.textLabel.text = [NSString stringWithFormat:@"%@", (NSString *)object];
-               if ([object isEqual:DONE_CELL]) {
-            cell.textLabel.textColor = [UIColor grayColor];
-            cell.contentView.backgroundColor = [UIColor darkGrayColor];
-        } else if ([object isEqual:DUMMY_CELL]) {
-            cell.textLabel.text = @"";
-            cell.contentView.backgroundColor = [UIColor clearColor];
-        } else {
-            cell.textLabel.textColor = [UIColor whiteColor];
-            cell.contentView.backgroundColor = backgroundColor;
-        }
+        cell.textLabel.text = [NSString stringWithFormat:@"MA %@", [object name]];
+        cell.textLabel.textColor = [UIColor whiteColor];
+        cell.contentView.backgroundColor = backgroundColor;
         cell.textLabel.shadowOffset = CGSizeMake(0, 1);
         cell.textLabel.shadowColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.6];
         
@@ -199,24 +251,29 @@
 
 #pragma mark UITableViewDelegate
 
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
     return NORMAL_CELL_FINISHING_HEIGHT;
 }
 
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
     
-    [self requestRowTitleforRow: [indexPath indexAtPosition:1] ];
+    [self requestRowTitleforRow: indexPath.row ];
 }
 
 #pragma mark -
 #pragma mark JTTableViewGestureAddingRowDelegate
 
-- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsAddRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsAddRowAtIndexPath:(NSIndexPath *)indexPath
+{
     [self.rows insertObject:ADDING_CELL atIndex:indexPath.row];
 }
 
-- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsCommitRowAtIndexPath:(NSIndexPath *)indexPath {
-    [self.rows replaceObjectAtIndex:indexPath.row withObject:@"Added"];
+- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsCommitRowAtIndexPath:(NSIndexPath *)indexPath
+{
+   // [[ShopAPIController sharedInstance] addItemByName:@"Added" andCategory:@"TestCategory"];
+   // [self.rows replaceObjectAtIndex:indexPath.row withObject:item];
     JTTransformableTableViewCell *cell = (id)[gestureRecognizer.tableView cellForRowAtIndexPath:indexPath];
 
 
@@ -231,16 +288,14 @@
         cell.finishedHeight = NORMAL_CELL_FINISHING_HEIGHT;
         cell.imageView.image = nil;
         cell.textLabel.text = @"";
-        
-        [self requestRowTitleforRow:0];
-        
-        
+        //[self requestRowTitleforRow:0];
     }
     
     
 }
 
-- (void)requestRowTitleforRow:(int)rowNum{
+- (void)requestRowTitleforRow:(int)rowNum
+{
     NSLog(@"requesting title for: %d", rowNum);
     
     self.selectedRow = rowNum;
@@ -258,29 +313,35 @@
     {
         UITextField *input = [alertView textFieldAtIndex:0];
         NSLog(@"User entered : %@", input.text);
-        [self.rows setObject:input.text atIndexedSubscript:self.selectedRow];
-        [self.tableView reloadData];
+        
+        MOListItem *item = [self.rows objectAtIndex:self.selectedRow];
+        [[ShopAPIController sharedInstance] updateItemWithID:item.listItemID toName:input.text andCategory:@"something"];
+        
+       
     }
 }
 
 
 
 
-- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsDiscardRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsDiscardRowAtIndexPath:(NSIndexPath *)indexPath
+{
     [self.rows removeObjectAtIndex:indexPath.row];
 }
 
 // Uncomment to following code to disable pinch in to create cell gesture
-- (NSIndexPath *)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer willCreateCellAtIndexPath:(NSIndexPath *)indexPath {
+- (NSIndexPath *)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer willCreateCellAtIndexPath:(NSIndexPath *)indexPath
+{
     if (indexPath.section == 0 && indexPath.row == 0) {
         return indexPath;
     }
     return nil;
 }
 
-#pragma mark JTTableViewGestureEditingRowDelegate
+#pragma mark - JTTableViewGestureEditingRowDelegate
 
-- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer didEnterEditingState:(JTTableViewCellEditingState)state forRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer didEnterEditingState:(JTTableViewCellEditingState)state forRowAtIndexPath:(NSIndexPath *)indexPath
+{
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
 
     UIColor *backgroundColor = nil;
@@ -302,29 +363,36 @@
 }
 
 // This is needed to be implemented to let our delegate choose whether the panning gesture should work
-- (BOOL)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer canEditRowAtIndexPath:(NSIndexPath *)indexPath {
+- (BOOL)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer canEditRowAtIndexPath:(NSIndexPath *)indexPath
+{
     return YES;
 }
 
-- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer commitEditingState:(JTTableViewCellEditingState)state forRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer commitEditingState:(JTTableViewCellEditingState)state forRowAtIndexPath:(NSIndexPath *)indexPath
+{
     UITableView *tableView = gestureRecognizer.tableView;
     
     
     NSIndexPath *rowToBeMovedToBottom = nil;
 
     [tableView beginUpdates];
-    if (state == JTTableViewCellEditingStateLeft) {
+    if (state == JTTableViewCellEditingStateLeft) { // DELETE A CELL
         // An example to discard the cell at JTTableViewCellEditingStateLeft
+        
+        MOListItem *item = [self.rows objectAtIndex:indexPath.row];
+        [[ShopAPIController sharedInstance] deleteItemWithID:[item listItemID]];
+        NSLog(@"\n\n\n\n\n\n\nID=%@\n\n\n\n\n\n\n", [item listItemID]);
         [self.rows removeObjectAtIndex:indexPath.row];
         [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationLeft];
-    } else if (state == JTTableViewCellEditingStateRight) {
-        // An example to retain the cell at commiting at JTTableViewCellEditingStateRight
-        [self.rows replaceObjectAtIndex:indexPath.row withObject:DONE_CELL];
-        [tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationLeft];
-        rowToBeMovedToBottom = indexPath;
-    } else {
-        // JTTableViewCellEditingStateMiddle shouldn't really happen in
-        // - [JTTableViewGestureDelegate gestureRecognizer:commitEditingState:forRowAtIndexPath:]
+        
+    }
+//    else if (state == JTTableViewCellEditingStateRight) {
+//        // An example to retain the cell at commiting at JTTableViewCellEditingStateRight
+//        [self.rows replaceObjectAtIndex:indexPath.row withObject:DONE_CELL];
+//        [tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationLeft];
+//        rowToBeMovedToBottom = indexPath;
+//    }
+    else {
     }
     [tableView endUpdates];
 
@@ -337,26 +405,73 @@
     }
 }
 
-#pragma mark JTTableViewGestureMoveRowDelegate
+#pragma mark - JTTableViewGestureMoveRowDelegate
 
-- (BOOL)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
+- (BOOL)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer canMoveRowAtIndexPath:(NSIndexPath *)indexPath
+{
     return YES;
 }
 
-- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsCreatePlaceholderForRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsCreatePlaceholderForRowAtIndexPath:(NSIndexPath *)indexPath
+{
     self.grabbedObject = [self.rows objectAtIndex:indexPath.row];
     [self.rows replaceObjectAtIndex:indexPath.row withObject:DUMMY_CELL];
 }
 
-- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsMoveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
+- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsMoveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath
+{
     id object = [self.rows objectAtIndex:sourceIndexPath.row];
     [self.rows removeObjectAtIndex:sourceIndexPath.row];
     [self.rows insertObject:object atIndex:destinationIndexPath.row];
 }
 
-- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsReplacePlaceholderForRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsReplacePlaceholderForRowAtIndexPath:(NSIndexPath *)indexPath
+{
     [self.rows replaceObjectAtIndex:indexPath.row withObject:self.grabbedObject];
     self.grabbedObject = nil;
+}
+
+#pragma mark - ShopAPIControllerDelegate
+- (void)shopAPIControllerRequestFinished:(ShopAPIControllerRequestType *)type withError:(NSError *)error
+{
+    
+//    if(type == ShopAPIControllerRequestTypeAdd){
+//        // show dialog to set name
+//        [self requestRowTitleforRow:0];
+//        [self.tableView reloadData];
+//    }
+    
+   
+    
+    
+    // Remove any loading indicators
+    if (error) {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:([error localizedFailureReason]?[error localizedFailureReason]:@"Error")
+                                                        message:[error localizedDescription]
+                                                       delegate:nil
+                                              cancelButtonTitle:@"Ok"
+                                              otherButtonTitles:nil];
+        [alert show];
+    }
+    
+}
+
+#pragma mark - Core Data Model Change
+- (void)handleDataModelChange:(NSNotification *)notif
+{
+      NSLog(@"\n\n\n\n\n\n DATA CHANGE:  \n\n\n\n\n\n\n\n\n");
+    
+    NSSet *updatedObjects = [[notif userInfo] objectForKey:NSUpdatedObjectsKey];
+    NSSet *deletedObjects = [[notif userInfo] objectForKey:NSDeletedObjectsKey];
+    NSSet *insertedObjects = [[notif userInfo] objectForKey:NSInsertedObjectsKey];
+    
+    // Do something in response to this
+    NSLog(@"updated :%@ \ndeleted: %@\n inserted: %@",updatedObjects,deletedObjects,insertedObjects);
+}
+
+- (void)didSave:(NSNotification *)notif
+{
+    NSLog(@"Did save %@",notif);
 }
 
 @end

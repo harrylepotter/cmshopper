@@ -10,6 +10,7 @@
 
 @interface ShopAPIController ()
 @property (nonatomic,strong) NSMutableSet *delegates;
+@property (nonatomic,strong) NSDateFormatter *dateFormatter;
 
 @end
 
@@ -21,6 +22,10 @@
     if (self = [super init]) {
         
         self.requestQueue = [[NSOperationQueue alloc] init];
+        
+        self.dateFormatter = [[NSDateFormatter alloc] init];
+        [self.dateFormatter setDateFormat:@"yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'"];
+        [self.dateFormatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
         
         // Creating a non retaining set for delegates
         //Default callbacks
@@ -81,7 +86,7 @@
     // Construct URL
     NSString *url = @"/items.json";
         
-    [self sendRequest:ShopAPIControllerRequestTypeAdd body:nil url:url];
+    [self sendRequest:ShopAPIControllerRequestTypeGetAll body:nil url:url];
 }
 
 - (void)addItemByName:(NSString *)name andCategory:(NSString *)category
@@ -102,17 +107,33 @@
 
 - (void)deleteItemWithID:(NSNumber *)itemID
 {
-    
+    // Construct URL
+    NSString *url = [NSString stringWithFormat:@"/items/%@.json",itemID];
+
+    [self sendRequest:ShopAPIControllerRequestTypeDelete body:nil url:url];
 }
 
 - (void)updateItemWithID:(NSNumber *)itemID toName:(NSString *)name andCategory:(NSString *)category
 {
+    // Construct URL
+    NSString *url = [NSString stringWithFormat:@"/items/%@.json",itemID];
     
+    // Construct body
+    NSDictionary *requestBody = @{
+                                  @"item":@{
+                                          @"name":(name?name:@""),
+                                          @"category":(category?category: @"")
+                                          }
+                                  };
+    
+    [self sendRequest:ShopAPIControllerRequestTypeUpdate body:requestBody url:url];
 }
 
 - (void)sendRequest:(ShopAPIControllerRequestType)requestType body:(id)body url:(NSString *)url
 {
     NSURL *nsURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",SERVER_URL,url]];
+    NSLog(@"SETTING URL: %@",[nsURL absoluteString]);
+    
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:nsURL];
     
     // Set headers
@@ -144,18 +165,19 @@
             break;
     }
     
-    // Construct JSON object    
-    NSError *error = nil;
-    NSData *jsonObject = [NSJSONSerialization dataWithJSONObject:body options:NSJSONWritingPrettyPrinted error:&error];
-    
-    if (error) {
-        [self notifyRequestFinished:ShopAPIControllerRequestTypeAdd withError:error];
-        return;
+    // Construct JSON object (if there's one)
+    if (body) {
+        NSError *error = nil;
+        NSData *jsonObject = [NSJSONSerialization dataWithJSONObject:body options:NSJSONWritingPrettyPrinted error:&error];
+        
+        if (error) {
+            [self notifyRequestFinished:ShopAPIControllerRequestTypeAdd withError:error];
+            return;
+        }
+     
+        NSLog(@"SETTING BODY: %@",[[NSString alloc] initWithData:jsonObject encoding:NSUTF8StringEncoding]);
+        [request setHTTPBody:jsonObject];
     }
-    
-    [request setHTTPBody:jsonObject];
-    
-    //NSLog(@"SETTING BODY: %@",[[NSString alloc] initWithData:jsonObject encoding:NSUTF8StringEncoding]);
     
     
     // Send the request
@@ -163,38 +185,134 @@
                                        queue:self.requestQueue
                            completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
                                
+                               NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+                               
+                               NSLog(@"Response status code %d",httpResponse.statusCode);
+                               
                                if (error) {
                                    [self notifyRequestFinished:ShopAPIControllerRequestTypeAdd withError:error];
                                    return;
                                }
                                
+                               // A type of error has occured
+                               if (httpResponse.statusCode>=400) {
+                                   NSDictionary *userInfo = nil;
+                                   
+                                   switch (httpResponse.statusCode) {
+                                       case 401:
+                                           userInfo = @{NSLocalizedFailureReasonErrorKey: @"Unauthorized",
+                                                        NSLocalizedDescriptionKey: @"Check your auth token"};
+                                           break;
+                                           
+                                       case 404:
+                                           userInfo = @{NSLocalizedFailureReasonErrorKey: @"Not Found",
+                                                        NSLocalizedDescriptionKey: @"You tried to do something with a non-existent item"};
+                                           break;
+                                        
+                                       case 422:
+                                           userInfo = @{NSLocalizedFailureReasonErrorKey: @"Error",
+                                                        NSLocalizedDescriptionKey: @"Errors during create or update (422)"};
+                                           break;
+                                           
+                                       case 500:
+                                           userInfo = @{NSLocalizedFailureReasonErrorKey: @"Server Error",
+                                                        NSLocalizedDescriptionKey: @"Try again later"};
+                                           break;
+                                           
+                                       default:
+                                           userInfo = @{NSLocalizedFailureReasonErrorKey: @"HTTP Error",
+                                                        NSLocalizedDescriptionKey: @"Failed to complete request"};
+                                           break;
+                                   }
+                                   
+                                   
+                                   NSError *error = [[NSError alloc] initWithDomain:NSURLErrorDomain
+                                                                               code:httpResponse.statusCode
+                                                                           userInfo:userInfo];
+                                   
+                                   [self notifyRequestFinished:ShopAPIControllerRequestTypeAdd withError:error];
+                                   return;
+                               }
+  
+//                               NSString *mockResponse = @"[{ \
+//                                   \"category\": \"Beverages\", \"created_at\": \"2012-10-10T18:28:03Z\", \"id\": 1,\
+//                                   \"name\": \"Kool-aid\", \
+//                                   \"updated_at\": \"2012-10-10T18:28:03Z\", \"user_id\": 3 \
+//                               }, { \
+//                                   \"category\": \"Beverages\", \"created_at\": \"2012-10-10T18:28:03Z\", \"id\": 2, \
+//                                   \"name\": \"Ecto cooler\", \
+//                                   \"updated_at\": \"2012-10-10T18:28:03Z\", \"user_id\": 3 \
+//                               }]";
+//                               data = [mockResponse dataUsingEncoding:NSUTF8StringEncoding];
+                               
                                // Data back
-                               NSError *jsonError = nil;
-                               NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:data
-                                                                                            options:NSJSONReadingMutableLeaves
-                                                                                              error:&jsonError];
-                               
-                               if (jsonError) {
-                                   [self notifyRequestFinished:ShopAPIControllerRequestTypeAdd withError:jsonError];
-                                   return;
+                               id responseObject = nil;
+                               if (data) {
+                                   NSError *jsonError = nil;
+                                   responseObject = [NSJSONSerialization JSONObjectWithData:data
+                                                                                    options:NSJSONReadingMutableLeaves
+                                                                                      error:&jsonError];
+                                   
+                                   if (jsonError) {
+                                       [self notifyRequestFinished:ShopAPIControllerRequestTypeAdd withError:jsonError];
+                                       return;
+                                   }
                                }
                                
+                               // Get the response array or put the list item in an array to streamline the process
+                               NSArray *listItems = nil;
+                               if ([responseObject isKindOfClass:[NSArray class]]) {
+                                   listItems = responseObject;
+                                   
+                               } else if ([responseObject isKindOfClass:[NSDictionary class]]) {
+                                   listItems = [NSArray arrayWithObject:responseObject];
+                                   
+                               }
+
                                // Store in database
-                               MOListItem *item = [MOListItem MR_createEntity];
-                               item.listItemID = responseDict[@"id"];
-                               item.userID = responseDict[@"user_id"];
-                               item.name = responseDict[@"name"];
-                               item.category = responseDict[@"category"];
-                               item.updatedAt = responseDict[@"updated_at"];
-                               item.createdAt = responseDict[@"created_at"];
-                               
-                               NSError *cdError = nil;
-                               [[NSManagedObjectContext MR_contextForCurrentThread] save:&cdError];
-                               
-                               if (cdError) {
-                                   [self notifyRequestFinished:ShopAPIControllerRequestTypeAdd withError:cdError];
-                                   return;
-                               }
+                               [MagicalRecord saveWithBlock:^(NSManagedObjectContext *localContext) {
+                                   
+                                   // If it's a delete call
+                                   if (requestType == ShopAPIControllerRequestTypeGetAll) {
+                                       NSPredicate *predicate = [NSPredicate predicateWithFormat:@"listItemID LIKE %@",@"*"];
+                                       [MOListItem MR_deleteAllMatchingPredicate:predicate inContext:localContext];
+                                   }
+                                   
+                                   for (NSDictionary *listItemDict in listItems) {
+                                       
+                                       NSNumber *listItemID = listItemDict[@"id"];
+                                       
+                                       
+                                       // First try to find existing, else create a new one
+                                       MOListItem *item = [MOListItem MR_findFirstByAttribute:@"listItemID" withValue:listItemID inContext:localContext];
+                                       if (!item) {
+                                           item = [MOListItem MR_createInContext:localContext];
+                                       }
+                                       
+                                       item.listItemID = listItemDict[@"id"];
+                                       item.userID = listItemDict[@"user_id"];
+                                       item.name = listItemDict[@"name"];
+                                       item.category = listItemDict[@"category"];
+                                       item.updatedAt = [_dateFormatter dateFromString:listItemDict[@"updated_at"]];
+                                       item.createdAt = [_dateFormatter dateFromString:listItemDict[@"created_at"]];
+                                   }
+                                   
+                                   // If it's a delete call
+                                   if (requestType == ShopAPIControllerRequestTypeDelete) {
+                                       // To make it easier, going to grab the ID back out of the URL
+                                       // Its the second to last component within the punctuationCharacterSet
+                                       NSArray *components = [url componentsSeparatedByCharactersInSet:[NSCharacterSet punctuationCharacterSet]];
+                                       if (components.count>1) {
+                                           NSString *listItemId = [components objectAtIndex:components.count-2];
+                                           
+                                           NSPredicate *predicate = [NSPredicate predicateWithFormat:@"listItemID == %@",listItemId];
+                                           [MOListItem MR_deleteAllMatchingPredicate:predicate inContext:localContext];
+                                       }
+                                   }
+                                   
+                               } completion:^(BOOL success, NSError *error) {
+                                   [self notifyRequestFinished:ShopAPIControllerRequestTypeAdd withError:error];
+                               }];
                            }];
 }
 

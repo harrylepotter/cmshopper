@@ -7,7 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "ShopAPIController.h"
 
-@interface ViewController : UITableViewController
+@interface ViewController : UITableViewController <ShopAPIControllerDelegate>
 
 @end

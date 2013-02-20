@@ -2,7 +2,7 @@
 //  MOListItem.m
 //  JTGestureBasedTableViewDemo
 //
-//  Created by Andreas Wulf on 20/02/13.
+//  Created by Andreas Wulf on 21/02/13.
 //
 //
 

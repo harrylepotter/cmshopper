@@ -2,7 +2,7 @@
 //  MOListItem.h
 //  JTGestureBasedTableViewDemo
 //
-//  Created by Andreas Wulf on 20/02/13.
+//  Created by Andreas Wulf on 21/02/13.
 //
 //
 
@@ -12,7 +12,7 @@
 
 @interface MOListItem : NSManagedObject
 
-@property (nonatomic, retain) NSNumber * updatedAt;
+@property (nonatomic, retain) NSDate * updatedAt;
 @property (nonatomic, retain) NSString * category;
 @property (nonatomic, retain) NSDate * createdAt;
 @property (nonatomic, retain) NSNumber * listItemID;
