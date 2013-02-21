@@ -175,7 +175,7 @@
             return;
         }
      
-        NSLog(@"SETTING BODY: %@",[[NSString alloc] initWithData:jsonObject encoding:NSUTF8StringEncoding]);
+        //NSLog(@"SETTING BODY: %@",[[NSString alloc] initWithData:jsonObject encoding:NSUTF8StringEncoding]);
         [request setHTTPBody:jsonObject];
     }
     
@@ -254,7 +254,7 @@
                                                                                       error:&jsonError];
                                    
                                    if (jsonError) {
-                                       [self notifyRequestFinished:ShopAPIControllerRequestTypeAdd withError:jsonError];
+                                       //[self notifyRequestFinished:ShopAPIControllerRequestTypeAdd withError:jsonError];
                                        return;
                                    }
                                }

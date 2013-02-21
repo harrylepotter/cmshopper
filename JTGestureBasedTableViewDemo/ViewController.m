@@ -38,31 +38,6 @@
 
 
 
-- (void)exampleCalls
-{
-    // To get a list of all items
-//    NSArray *allItems = [MOListItem MR_findAllSortedBy:@"name" ascending:YES];
-//    
-//    for(int i=0; i < [allItems count]; i++){
-//        MOListItem *item = [allItems objectAtIndex:i];
-//        NSLog(@"item: %@", [item name]);
-//    }
-    
-    
-//    // Create New
-   // [[ShopAPIController sharedInstance] addItemByName:@"TestName" andCategory:@"TestCategory"];
-   
-//    
-//    // Delete existing
- //   [[ShopAPIController sharedInstance] deleteItemWithID:@208];
-//    
-    // Get all items (refresh)
-    [[ShopAPIController sharedInstance] getAllItems];
-    
-//    // Update Item
-//    [[ShopAPIController sharedInstance] updateItemWithID:@123 toName:@"NewName" andCategory:@"NewCategory"];
-}
-
 
 
 
@@ -85,9 +60,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
-    // TODO: REMOVE
-    [self exampleCalls];
+    [[ShopAPIController sharedInstance] addItemByName:@"test" andCategory:@"something"];
     
     [[ShopAPIController sharedInstance] addDelegate:self];
     
@@ -110,10 +83,8 @@
     self.tableView.backgroundColor = [UIColor blackColor];
     self.tableView.separatorStyle  = UITableViewCellSeparatorStyleNone;
     self.tableView.rowHeight       = NORMAL_CELL_FINISHING_HEIGHT;
-    
-    self.rows = [NSMutableArray arrayWithArray:[MOListItem MR_findAll]];
     self.selectedRow = 0;
-
+    [[ShopAPIController sharedInstance] getAllItems];
   
     
 }
@@ -239,8 +210,10 @@
             cell.textLabel.backgroundColor = [UIColor clearColor];
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
         }
+        
+        NSLog(@"\n\n\n Object = %@\n\n\n\n", object);
 
-        cell.textLabel.text = [NSString stringWithFormat:@"MA %@", [object name]];
+        cell.textLabel.text = [NSString stringWithFormat:@"%@", [object name]];
         cell.textLabel.textColor = [UIColor whiteColor];
         cell.contentView.backgroundColor = backgroundColor;
         cell.textLabel.shadowOffset = CGSizeMake(0, 1);
@@ -274,11 +247,11 @@
 - (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsCommitRowAtIndexPath:(NSIndexPath *)indexPath
 {
    // [[ShopAPIController sharedInstance] addItemByName:@"Added" andCategory:@"TestCategory"];
-   // [self.rows replaceObjectAtIndex:indexPath.row withObject:item];
-    JTTransformableTableViewCell *cell = (id)[gestureRecognizer.tableView cellForRowAtIndexPath:indexPath];
-
-
+    MOListItem *item = [MOListItem MR_createEntity];
+    [self.rows replaceObjectAtIndex:indexPath.row withObject:item];
     
+    
+    JTTransformableTableViewCell *cell = (id)[gestureRecognizer.tableView cellForRowAtIndexPath:indexPath];
     BOOL isFirstCell = indexPath.section == 0 && indexPath.row == 0;
     if (isFirstCell && cell.frame.size.height > COMMITING_CREATE_CELL_HEIGHT * 2) {
         [self.rows removeObjectAtIndex:indexPath.row];
@@ -289,16 +262,14 @@
         cell.finishedHeight = NORMAL_CELL_FINISHING_HEIGHT;
         cell.imageView.image = nil;
         cell.textLabel.text = @"";
-        //[self requestRowTitleforRow:0];
+        [self requestRowTitleforRow:0];
     }
     
     
 }
 
 - (void)requestRowTitleforRow:(int)rowNum
-{
-    NSLog(@"requesting title for: %d", rowNum);
-    
+{    
     self.selectedRow = rowNum;
     
     UIAlertView *myAlertView = [[UIAlertView alloc] initWithTitle:@"Item name" message:@"" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Save", nil];
@@ -313,16 +284,17 @@
     if([title isEqualToString:@"Save"])
     {
         UITextField *input = [alertView textFieldAtIndex:0];
-        NSLog(@"User entered : %@", input.text);
-        
+    
         MOListItem *item = [self.rows objectAtIndex:self.selectedRow];
-        [[ShopAPIController sharedInstance] updateItemWithID:item.listItemID toName:input.text andCategory:@"something"];
+        if([item.listItemID isEqualToNumber:@0]){
+            [[ShopAPIController sharedInstance] addItemByName:input.text andCategory:@"something"];
+        }else{
+            [[ShopAPIController sharedInstance] updateItemWithID:item.listItemID toName:input.text andCategory:@"something"];
+        }
         
-       
+        
     }
 }
-
-
 
 
 - (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer needsDiscardRowAtIndexPath:(NSIndexPath *)indexPath
@@ -372,38 +344,18 @@
 - (void)gestureRecognizer:(JTTableViewGestureRecognizer *)gestureRecognizer commitEditingState:(JTTableViewCellEditingState)state forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     UITableView *tableView = gestureRecognizer.tableView;
-    
-    
-    NSIndexPath *rowToBeMovedToBottom = nil;
-
+  
     [tableView beginUpdates];
     if (state == JTTableViewCellEditingStateLeft) { // DELETE A CELL
-        // An example to discard the cell at JTTableViewCellEditingStateLeft
-        
         MOListItem *item = [self.rows objectAtIndex:indexPath.row];
         [[ShopAPIController sharedInstance] deleteItemWithID:[item listItemID]];
-        NSLog(@"\n\n\n\n\n\n\nID=%@\n\n\n\n\n\n\n", [item listItemID]);
         [self.rows removeObjectAtIndex:indexPath.row];
         [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationLeft];
         
     }
-//    else if (state == JTTableViewCellEditingStateRight) {
-//        // An example to retain the cell at commiting at JTTableViewCellEditingStateRight
-//        [self.rows replaceObjectAtIndex:indexPath.row withObject:DONE_CELL];
-//        [tableView reloadRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationLeft];
-//        rowToBeMovedToBottom = indexPath;
-//    }
-    else {
-    }
+
     [tableView endUpdates];
 
-
-    // Row color needs update after datasource changes, reload it.
-//    [tableView performSelector:@selector(reloadVisibleRowsExceptIndexPath:) withObject:indexPath afterDelay:JTTableViewRowAnimationDuration];
-//
-//    if (rowToBeMovedToBottom) {
-//        [self performSelector:@selector(moveRowToBottomForIndexPath:) withObject:rowToBeMovedToBottom afterDelay:JTTableViewRowAnimationDuration * 2];
-//    }
 }
 
 #pragma mark - JTTableViewGestureMoveRowDelegate
@@ -435,15 +387,7 @@
 #pragma mark - ShopAPIControllerDelegate
 - (void)shopAPIControllerRequestFinished:(ShopAPIControllerRequestType *)type withError:(NSError *)error
 {
-    
-//    if(type == ShopAPIControllerRequestTypeAdd){
-//        // show dialog to set name
-//        [self requestRowTitleforRow:0];
-//        [self.tableView reloadData];
-//    }
-    
-   
-    
+
     
     // Remove any loading indicators
     if (error) {
@@ -460,19 +404,21 @@
 #pragma mark - Core Data Model Change
 - (void)handleDataModelChange:(NSNotification *)notif
 {
-      NSLog(@"\n\n\n\n\n\n DATA CHANGE:  \n\n\n\n\n\n\n\n\n");
+    self.rows = [NSMutableArray arrayWithArray: [MOListItem MR_findAllSortedBy:@"listItemID" ascending:NO] ];
+    [self.tableView reloadData];
     
-    NSSet *updatedObjects = [[notif userInfo] objectForKey:NSUpdatedObjectsKey];
-    NSSet *deletedObjects = [[notif userInfo] objectForKey:NSDeletedObjectsKey];
-    NSSet *insertedObjects = [[notif userInfo] objectForKey:NSInsertedObjectsKey];
+
     
-    // Do something in response to this
-    NSLog(@"updated :%@ \ndeleted: %@\n inserted: %@",updatedObjects,deletedObjects,insertedObjects);
+    
+    //NSSet *updatedObjects = [[notif userInfo] objectForKey:NSUpdatedObjectsKey];
+    //NSSet *deletedObjects = [[notif userInfo] objectForKey:NSDeletedObjectsKey];
+    //NSSet *insertedObjects = [[notif userInfo] objectForKey:NSInsertedObjectsKey];
+    
 }
 
 - (void)didSave:(NSNotification *)notif
 {
-    NSLog(@"Did save %@",notif);
+    //NSLog(@"Did save %@",notif);
 }
 
 @end
